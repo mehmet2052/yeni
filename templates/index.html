@@ -1,0 +1,42 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Key Yönetim Paneli</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+        table { width: 100%%; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ccc; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+    <h2>Key Yönetim Paneli</h2>
+    <form method="POST" action="/generate">
+        <label>Süre:</label>
+        <select name="duration">
+            <option value="1d">1 Gün</option>
+            <option value="3d">3 Gün</option>
+            <option value="1m">1 Ay</option>
+            <option value="lifetime">Sınırsız</option>
+        </select>
+        <button type="submit">Oluştur</button>
+    </form>
+    <br>
+    <table>
+        <tr><th>Key</th><th>Durum</th><th>HWID</th><th>Bitiş</th><th>İşlemler</th></tr>
+        {% for key, info in keys.items() %}
+        <tr>
+            <td>{{ key }}</td>
+            <td>{{ info.status }}</td>
+            <td>{{ info.hwid or "-" }}</td>
+            <td>{{ info.expires }}</td>
+            <td>
+                <a href="/delete/{{ key }}">Sil</a> |
+                <a href="/reset_hwid/{{ key }}">HWID Sıfırla</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

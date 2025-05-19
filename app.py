@@ -1,82 +1,86 @@
-from flask import Flask, request, jsonify
-import sqlite3
-import uuid
+
+from flask import Flask, render_template, request, redirect, url_for
+import json, uuid, hashlib
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-DB_PATH = 'hwid_auth.db'
+DATA_FILE = "data.json"
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS keys (
-                    key TEXT PRIMARY KEY,
-                    duration INTEGER,
-                    created_at TEXT,
-                    hwid TEXT,
-                    activated INTEGER DEFAULT 0
-                )''')
-    conn.commit()
-    conn.close()
+def load_data():
+    try:
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {"keys": {}}
 
-@app.route('/')
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+@app.route("/")
 def home():
-    return "HWID Auth Sistemi Çalışıyor"
+    data = load_data()
+    return render_template("index.html", keys=data["keys"])
 
-@app.route('/generate_key', methods=['POST'])
+@app.route("/generate", methods=["POST"])
 def generate_key():
-    duration = request.json.get('duration')
-    if duration not in [1, 3, 30, -1]:
-        return jsonify({'error': 'Invalid duration'}), 400
+    duration = request.form.get("duration")
+    key = str(uuid.uuid4())
+    expire_date = None
 
-    key = str(uuid.uuid4()).replace('-', '').upper()
-    created_at = datetime.utcnow().isoformat()
+    if duration == "1d":
+        expire_date = (datetime.now() + timedelta(days=1)).isoformat()
+    elif duration == "3d":
+        expire_date = (datetime.now() + timedelta(days=3)).isoformat()
+    elif duration == "1m":
+        expire_date = (datetime.now() + timedelta(days=30)).isoformat()
+    elif duration == "lifetime":
+        expire_date = "lifetime"
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('INSERT INTO keys (key, duration, created_at) VALUES (?, ?, ?)',
-              (key, duration, created_at))
-    conn.commit()
-    conn.close()
+    data = load_data()
+    data["keys"][key] = {"hwid": None, "expires": expire_date, "status": "unused"}
+    save_data(data)
+    return redirect(url_for("home"))
 
-    return jsonify({'key': key})
+@app.route("/delete/<key>")
+def delete_key(key):
+    data = load_data()
+    if key in data["keys"]:
+        del data["keys"][key]
+    save_data(data)
+    return redirect(url_for("home"))
 
-@app.route('/activate_key', methods=['POST'])
-def activate_key():
-    key = request.json.get('key')
-    hwid = request.json.get('hwid')
+@app.route("/reset_hwid/<key>")
+def reset_hwid(key):
+    data = load_data()
+    if key in data["keys"]:
+        data["keys"][key]["hwid"] = None
+        data["keys"][key]["status"] = "unused"
+    save_data(data)
+    return redirect(url_for("home"))
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('SELECT duration, created_at, hwid, activated FROM keys WHERE key = ?', (key,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        return jsonify({'error': 'Invalid key'}), 400
+@app.route("/auth", methods=["POST"])
+def auth():
+    key = request.form.get("key")
+    hwid = request.form.get("hwid")
+    data = load_data()
 
-    duration, created_at, stored_hwid, activated = row
-    created_at_dt = datetime.fromisoformat(created_at)
+    if key not in data["keys"]:
+        return "INVALID_KEY"
 
-    if duration != -1:
-        expiry_date = created_at_dt + timedelta(days=duration)
-        if datetime.utcnow() > expiry_date:
-            conn.close()
-            return jsonify({'error': 'Key expired'}), 400
+    record = data["keys"][key]
 
-    if activated == 0:
-        # İlk aktivasyon
-        c.execute('UPDATE keys SET hwid = ?, activated = 1 WHERE key = ?', (hwid, key))
-        conn.commit()
-        conn.close()
-        return jsonify({'message': 'Key activated successfully'})
-    else:
-        if stored_hwid != hwid:
-            conn.close()
-            return jsonify({'error': 'HWID mismatch'}), 400
-        else:
-            conn.close()
-            return jsonify({'message': 'Key already activated with this HWID'})
+    if record["expires"] != "lifetime" and datetime.now() > datetime.fromisoformat(record["expires"]):
+        return "KEY_EXPIRED"
+
+    if record["hwid"] is None:
+        record["hwid"] = hwid
+        record["status"] = "used"
+    elif record["hwid"] != hwid:
+        return "HWID_MISMATCH"
+
+    save_data(data)
+    return "AUTH_SUCCESS"
 
 if __name__ == "__main__":
-    init_db()
     app.run(host="0.0.0.0", port=10000)
