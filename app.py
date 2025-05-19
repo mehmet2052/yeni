@@ -1,10 +1,16 @@
-
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import json, uuid, hashlib
 from datetime import datetime, timedelta
+from functools import wraps
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey123!"  # Oturum güvenliği için gizli anahtar
 DATA_FILE = "data.json"
+
+# Basit kullanıcı adı & şifre (güvenlik için değiştir)
+USERS = {
+    "admin": "Yaren2052."
+}
 
 def load_data():
     try:
@@ -17,12 +23,44 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
+# Giriş yapılmış mı kontrol eden dekoratör
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in session:
+            flash("Lütfen giriş yapınız.", "warning")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        if username in USERS and USERS[username] == password:
+            session['username'] = username
+            flash("Başarıyla giriş yaptınız.", "success")
+            return redirect(url_for("home"))
+        else:
+            flash("Kullanıcı adı veya şifre hatalı.", "danger")
+    return render_template("login.html")
+
+@app.route("/logout")
+@login_required
+def logout():
+    session.pop('username', None)
+    flash("Çıkış yapıldı.", "info")
+    return redirect(url_for('login'))
+
 @app.route("/")
+@login_required
 def home():
     data = load_data()
     return render_template("index.html", keys=data["keys"])
 
 @app.route("/generate", methods=["POST"])
+@login_required
 def generate_key():
     duration = request.form.get("duration")
     key = str(uuid.uuid4())
@@ -43,6 +81,7 @@ def generate_key():
     return redirect(url_for("home"))
 
 @app.route("/delete/<key>")
+@login_required
 def delete_key(key):
     data = load_data()
     if key in data["keys"]:
@@ -51,6 +90,7 @@ def delete_key(key):
     return redirect(url_for("home"))
 
 @app.route("/reset_hwid/<key>")
+@login_required
 def reset_hwid(key):
     data = load_data()
     if key in data["keys"]:
