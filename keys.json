@@ -1,0 +1,12 @@
+{
+  "ABC123-1GUN": {
+    "duration": "1gün",
+    "hwid": null,
+    "used": false
+  },
+  "XYZ789-LIFETIME": {
+    "duration": "lifetime",
+    "hwid": null,
+    "used": false
+  }
+}
