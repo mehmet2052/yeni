@@ -1,21 +1,39 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import json, uuid, hashlib
+import json, uuid
 from datetime import datetime, timedelta
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123!"  # Oturum güvenliği için gizli anahtar
+app.secret_key = "supersecretkey123!"
 DATA_FILE = "data.json"
 
-# Basit kullanıcı adı & şifre (güvenlik için değiştir)
 USERS = {
     "admin": "Yaren2052."
 }
 
+# Süresi dolmuş key'leri sil
+def clean_expired_keys(data):
+    now = datetime.now()
+    updated_keys = {}
+    for key, info in data.get("keys", {}).items():
+        if info["expires"] == "lifetime":
+            updated_keys[key] = info
+        else:
+            try:
+                if datetime.fromisoformat(info["expires"]) > now:
+                    updated_keys[key] = info
+            except:
+                pass  # Tarih hatası varsa atla
+    data["keys"] = updated_keys
+    return data
+
 def load_data():
     try:
         with open(DATA_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            data = clean_expired_keys(data)
+            save_data(data)  # Temizlenmiş veriyi kaydet
+            return data
     except:
         return {"keys": {}}
 
@@ -23,7 +41,6 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-# Giriş yapılmış mı kontrol eden dekoratör
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
