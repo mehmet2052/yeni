@@ -19,6 +19,10 @@ def init_db():
     conn.commit()
     conn.close()
 
+@app.route('/')
+def home():
+    return "HWID Auth Sistemi Çalışıyor"
+
 @app.route('/generate_key', methods=['POST'])
 def generate_key():
     duration = request.json.get('duration')
