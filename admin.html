@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Admin Paneli - Key Yönetimi</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<h2>Admin Paneli</h2>
+<a href="{{ url_for('logout') }}">Çıkış Yap</a>
+
+<h3>Yeni Key Oluştur</h3>
+<form method="post">
+    <input type="hidden" name="action" value="create">
+    <label>Key:</label><br>
+    <input type="text" name="new_key" required><br>
+    <label>Süre (gün olarak):</label><br>
+    <select name="duration_days" required>
+        <option value="1">1 Gün</option>
+        <option value="3">3 Gün</option>
+        <option value="30">1 Ay</option>
+        <option value="9999">Lifetime</option>
+    </select><br><br>
+    <button type="submit">Oluştur</button>
+</form>
+
+<h3>Aktif Keyler</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Key</th>
+        <th>Süre (gün)</th>
+        <th>HWID</th>
+        <th>Kullanıldı mı?</th>
+        <th>İşlemler</th>
+    </tr>
+    {% for key in keys %}
+    <tr>
+        <td>{{ key.key }}</td>
+        <td>{{ key.duration_days }}</td>
+        <td>{{ key.hwid or 'Yok' }}</td>
+        <td>{{ 'Evet' if key.used else 'Hayır' }}</td>
+        <td>
+            <form method="post" style="display:inline">
+                <input type="hidden" name="action" value="reset_hwid">
+                <input type="hidden" name="reset_key" value="{{ key.key }}">
+                <button type="submit">HWID Sıfırla</button>
+            </form>
+            <form method="post" style="display:inline">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="del_key" value="{{ key.key }}">
+                <button type="submit" onclick="return confirm('Silmek istediğine emin misin?')">Sil</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul class="messages">
+        {% for category, msg in messages %}
+            <li class="{{category}}">{{msg}}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+</body>
+</html>
