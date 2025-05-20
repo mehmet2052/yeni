@@ -10,42 +10,49 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey123!")
-DATA_FILE = "data.json"
+
+# .env üzerinden data dosyası yolu ayarlanabilir
+DATA_FILE = os.getenv("DATA_FILE", "data.json")
 
 USERS = {
     "admin": os.getenv("ADMIN_PASSWORD", "Yaren2052.")
 }
 
-# Süresi dolmuş key'leri temizleme (expired olarak işaretleme)
+# Süresi dolmuş key'leri güncelle
 def clean_expired_keys(data):
     now = datetime.now()
     for key, info in data.get("keys", {}).items():
-        if info["expires"] == "lifetime":
+        expires = info.get("expires", "lifetime")
+        if expires == "lifetime":
             info["status"] = info.get("status", "unused")
         else:
             try:
-                expire_time = datetime.fromisoformat(info["expires"])
-                if expire_time < now:
-                    info["status"] = "expired"
-                else:
-                    info["status"] = info.get("status", "unused")
-            except:
+                expire_time = datetime.fromisoformat(expires)
+                info["status"] = "expired" if expire_time < now else info.get("status", "unused")
+            except Exception as e:
+                print(f"[HATA - Tarih dönüşüm]: {key}: {e}")
                 info["status"] = "expired"
     return data
 
 def load_data():
     try:
+        if not os.path.exists(DATA_FILE):
+            return {"keys": {}}
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
             data = clean_expired_keys(data)
             save_data(data)
             return data
-    except:
+    except Exception as e:
+        print(f"[HATA - load_data]: {e}")
         return {"keys": {}}
 
 def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    try:
+        with open(DATA_FILE, "w") as f:
+            json.dump(data, f, indent=4)
+    except Exception as e:
+        print(f"[HATA - save_data]: {e}")
 
 def login_required(f):
     @wraps(f)
@@ -80,14 +87,14 @@ def logout():
 @login_required
 def home():
     data = load_data()
-    return render_template("index.html", keys=data["keys"])
+    return render_template("index.html", keys=data.get("keys", {}))
 
 @app.route("/generate", methods=["POST"])
 @login_required
 def generate_key():
     prefix = request.form.get("prefix", "KEY-")
     duration = request.form.get("duration")
-    hwid = request.form.get("hwid", None)
+    hwid = request.form.get("hwid") or None
 
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
     key = f"{prefix}{random_part}"
@@ -117,21 +124,25 @@ def generate_key():
 @login_required
 def delete_key(key):
     data = load_data()
-    if key in data["keys"]:
+    if key in data.get("keys", {}):
         del data["keys"][key]
         save_data(data)
         flash(f"{key} silindi.", "info")
+    else:
+        flash(f"{key} bulunamadı.", "warning")
     return redirect(url_for("home"))
 
 @app.route("/reset_hwid/<key>")
 @login_required
 def reset_hwid(key):
     data = load_data()
-    if key in data["keys"]:
+    if key in data.get("keys", {}):
         data["keys"][key]["hwid"] = None
         data["keys"][key]["status"] = "unused"
         save_data(data)
         flash(f"{key} için HWID sıfırlandı.", "success")
+    else:
+        flash(f"{key} bulunamadı.", "warning")
     return redirect(url_for("home"))
 
 @app.route("/auth", methods=["POST"])
@@ -140,16 +151,24 @@ def auth():
     hwid = request.form.get("hwid")
     data = load_data()
 
-    if key not in data["keys"]:
+    if key not in data.get("keys", {}):
         return "INVALID_KEY"
 
     record = data["keys"][key]
 
-    if record["expires"] != "lifetime" and datetime.now() > datetime.fromisoformat(record["expires"]):
-        record["status"] = "expired"
-        save_data(data)
-        return "KEY_EXPIRED"
+    # Süre kontrolü
+    if record["expires"] != "lifetime":
+        try:
+            if datetime.now() > datetime.fromisoformat(record["expires"]):
+                record["status"] = "expired"
+                save_data(data)
+                return "KEY_EXPIRED"
+        except:
+            record["status"] = "expired"
+            save_data(data)
+            return "KEY_EXPIRED"
 
+    # HWID kontrolü
     if record["hwid"] is None:
         record["hwid"] = hwid
         record["status"] = "used"
