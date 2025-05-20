@@ -1,0 +1,80 @@
+**login.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Giriş</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('https://i.ibb.co/hg5JTKG/cracked-glass.png') center/cover no-repeat, linear-gradient(to bottom, #1a1a1a, #333);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .rain {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background-image: url('https://i.ibb.co/w07LWT7/rain.gif');
+      background-size: cover;
+      opacity: 0.4;
+    }
+    .login-container {
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+      z-index: 1;
+    }
+    .login-container h2 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 5px;
+      background: #222;
+      color: #fff;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #1e90ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #0f78d0;
+    }
+  </style>
+</head>
+<body>
+  <div class="rain"></div>
+  <div class="login-container">
+    <h2>Admin Paneli</h2>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Kullanıcı Adı" required />
+      <input type="password" name="password" placeholder="Şifre" required />
+      <button type="submit">Giriş Yap</button>
+    </form>
+  </div>
+</body>
+</html>
+```
