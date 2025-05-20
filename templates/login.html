@@ -88,25 +88,12 @@
         transform: rotate(360deg);
       }
     }
-
-    .flash {
-      color: red;
-      text-align: center;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>Admin Giriş</h2>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-    <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+    <form id="loginForm">
       <input type="text" name="username" placeholder="Kullanıcı Adı" required />
       <input type="password" name="password" placeholder="Şifre" required />
       <button type="submit">Giriş Yap</button>
@@ -122,8 +109,16 @@
     const form = document.getElementById("loginForm");
     const loading = document.getElementById("loading");
 
-    form.addEventListener("submit", function () {
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); // Form gönderimini durdur
       loading.style.display = "flex"; // Yükleniyor ekranını göster
+
+      // Simüle edilmiş bekleme süresi (örn. sunucu yanıtı)
+      setTimeout(() => {
+        // Buraya yönlendirme ya da gerçek doğrulama kodu eklenebilir
+        alert("Giriş başarılı!");
+        loading.style.display = "none";
+      }, 2000);
     });
   </script>
 </body>
