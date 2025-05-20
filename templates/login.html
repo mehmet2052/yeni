@@ -1,7 +1,5 @@
-**login.html**
-```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,71 +8,118 @@
     body {
       margin: 0;
       padding: 0;
-      background: url('https://i.ibb.co/hg5JTKG/cracked-glass.png') center/cover no-repeat, linear-gradient(to bottom, #1a1a1a, #333);
+      background: linear-gradient(to bottom, #2c3e50, #4ca1af);
       height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
+      font-family: Arial, sans-serif;
     }
-    .rain {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      background-image: url('https://i.ibb.co/w07LWT7/rain.gif');
-      background-size: cover;
-      opacity: 0.4;
-    }
+
     .login-container {
-      background: rgba(0, 0, 0, 0.75);
-      border-radius: 15px;
+      background: white;
+      border-radius: 10px;
       padding: 30px;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      width: 300px;
       z-index: 1;
     }
+
     .login-container h2 {
-      color: #fff;
       text-align: center;
       margin-bottom: 20px;
+      color: #333;
     }
-    input[type="text"], input[type="password"] {
+
+    input[type="text"],
+    input[type="password"] {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 5px;
-      background: #222;
-      color: #fff;
     }
+
     button {
       width: 100%;
       padding: 10px;
       border: none;
       border-radius: 5px;
-      background-color: #1e90ff;
+      background-color: #3498db;
       color: white;
       font-weight: bold;
       cursor: pointer;
       transition: background 0.3s;
     }
+
     button:hover {
-      background-color: #0f78d0;
+      background-color: #2980b9;
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      font-size: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 999;
+      display: none;
+    }
+
+    .spinner {
+      margin-top: 15px;
+      border: 4px solid #fff;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="rain"></div>
   <div class="login-container">
-    <h2>Admin Paneli</h2>
-    <form method="POST">
+    <h2>Admin Giriş</h2>
+    <form id="loginForm">
       <input type="text" name="username" placeholder="Kullanıcı Adı" required />
       <input type="password" name="password" placeholder="Şifre" required />
       <button type="submit">Giriş Yap</button>
     </form>
   </div>
+
+  <div class="loading-overlay" id="loading">
+    <div>Giriş yapılıyor... Lütfen bekleyin!</div>
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const loading = document.getElementById("loading");
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); // Form gönderimini durdur
+      loading.style.display = "flex"; // Yükleniyor ekranını göster
+
+      // Simüle edilmiş bekleme süresi (örn. sunucu yanıtı)
+      setTimeout(() => {
+        // Buraya yönlendirme ya da gerçek doğrulama kodu eklenebilir
+        alert("Giriş başarılı!");
+        loading.style.display = "none";
+      }, 2000);
+    });
+  </script>
 </body>
 </html>
-```
