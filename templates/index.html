@@ -1,69 +1,56 @@
-```html
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Key Paneli</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: url('https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGlvd3ZremlkNTk2bjNncndxeHAzdnk2Zm9naGFxaDh2aDlkcjV5bCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/30u0K0Albaf04/giphy.gif') center/cover no-repeat, linear-gradient(to bottom, #111, #222);
-      color: #eee;
-      overflow: hidden;
+      background: linear-gradient(#111, #222);
+      font-family: sans-serif;
+      color: white;
+      overflow-x: hidden;
     }
     .rain {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url('');
-      background-size: cover;
-      opacity: 0.35;
+      background: url('https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXoyb3BkMGlwZWg5dDFoYndrang1bHdobzNqNmw2a29tbDVzamsyZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3z9674YCi3BsgLwiLx/giphy.gif') center center / cover no-repeat;
+      opacity: 0.2;
+      z-index: 0;
       pointer-events: none;
     }
     .container {
-      padding: 20px;
+      padding: 30px;
       position: relative;
       z-index: 1;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255,255,255,0.05);
     }
     th, td {
       padding: 10px;
       border-bottom: 1px solid #444;
       text-align: center;
     }
-    .actions a {
-      color: #1e90ff;
-      text-decoration: none;
-      margin: 0 5px;
-    }
     form {
       margin-top: 20px;
       display: flex;
-      justify-content: center;
       gap: 10px;
     }
-    select, button {
+    input, select, button {
       padding: 10px;
       border-radius: 5px;
       border: none;
     }
     button {
-      background-color: #1e90ff;
+      background: #1e90ff;
       color: white;
       font-weight: bold;
-      cursor: pointer;
     }
   </style>
 </head>
@@ -75,7 +62,7 @@
       <tr>
         <th>Key</th>
         <th>HWID</th>
-        <th>Bitiş Tarihi</th>
+        <th>Bitiş</th>
         <th>Durum</th>
         <th>İşlemler</th>
       </tr>
@@ -85,8 +72,8 @@
         <td>{{ data.hwid or "-" }}</td>
         <td>{{ data.expires }}</td>
         <td>{{ data.status }}</td>
-        <td class="actions">
-          <a href="/reset_hwid/{{ key }}">HWID Sıfırla</a>
+        <td>
+          <a href="/reset_hwid/{{ key }}">HWID Sıfırla</a> |
           <a href="/delete/{{ key }}">Sil</a>
         </td>
       </tr>
@@ -94,15 +81,15 @@
     </table>
 
     <form method="POST" action="/generate">
+      <input type="text" name="prefix" placeholder="Örn: VIP-" maxlength="15">
       <select name="duration">
         <option value="1d">1 Gün</option>
         <option value="3d">3 Gün</option>
         <option value="1m">1 Ay</option>
         <option value="lifetime">Sınırsız</option>
       </select>
-      <button type="submit">Key Oluştur</button>
+      <button type="submit">Yeni Key Oluştur</button>
     </form>
   </div>
 </body>
 </html>
-```

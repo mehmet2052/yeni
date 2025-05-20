@@ -16,7 +16,7 @@ USERS = {
     "admin": os.getenv("ADMIN_PASSWORD", "Yaren2052.")
 }
 
-# Süresi dolmuş key'leri silme — sadece expired olarak işaretle
+# Süresi dolmuş key'leri temizleme (expired olarak işaretleme)
 def clean_expired_keys(data):
     now = datetime.now()
     for key, info in data.get("keys", {}).items():
@@ -63,7 +63,7 @@ def login():
         password = request.form.get("password")
         if username in USERS and USERS[username] == password:
             session['username'] = username
-            flash("Başarıyla giriş yaptınız.", "success")
+            flash("Giriş yapıldı, lütfen bekleyin!", "success")
             return redirect(url_for("home"))
         else:
             flash("Kullanıcı adı veya şifre hatalı.", "danger")
@@ -88,10 +88,10 @@ def generate_key():
     prefix = request.form.get("prefix", "KEY-")
     duration = request.form.get("duration")
     hwid = request.form.get("hwid", None)
-    
+
     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
     key = f"{prefix}{random_part}"
-    
+
     if duration == "1d":
         expire_date = (datetime.now() + timedelta(days=1)).isoformat()
     elif duration == "3d":
@@ -101,7 +101,7 @@ def generate_key():
     elif duration == "lifetime":
         expire_date = "lifetime"
     else:
-        expire_date = (datetime.now() + timedelta(days=1)).isoformat()  # default 1 gün
+        expire_date = (datetime.now() + timedelta(days=1)).isoformat()
 
     data = load_data()
     data["keys"][key] = {
