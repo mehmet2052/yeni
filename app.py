@@ -1,30 +1,36 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import json, uuid
+import json, random, string
 from datetime import datetime, timedelta
 from functools import wraps
+import os
+from dotenv import load_dotenv
+
+# .env dosyasını yükle
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123!"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey123!")
 DATA_FILE = "data.json"
 
 USERS = {
-    "admin": "Yaren2052."
+    "admin": os.getenv("ADMIN_PASSWORD", "Yaren2052.")
 }
 
-# Süresi dolmuş key'leri sil
+# Süresi dolmuş key'leri silme — sadece expired olarak işaretle
 def clean_expired_keys(data):
     now = datetime.now()
-    updated_keys = {}
     for key, info in data.get("keys", {}).items():
         if info["expires"] == "lifetime":
-            updated_keys[key] = info
+            info["status"] = info.get("status", "unused")
         else:
             try:
-                if datetime.fromisoformat(info["expires"]) > now:
-                    updated_keys[key] = info
+                expire_time = datetime.fromisoformat(info["expires"])
+                if expire_time < now:
+                    info["status"] = "expired"
+                else:
+                    info["status"] = info.get("status", "unused")
             except:
-                pass  # Tarih hatası varsa atla
-    data["keys"] = updated_keys
+                info["status"] = "expired"
     return data
 
 def load_data():
@@ -32,7 +38,7 @@ def load_data():
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
             data = clean_expired_keys(data)
-            save_data(data)  # Temizlenmiş veriyi kaydet
+            save_data(data)
             return data
     except:
         return {"keys": {}}
@@ -79,10 +85,13 @@ def home():
 @app.route("/generate", methods=["POST"])
 @login_required
 def generate_key():
+    prefix = request.form.get("prefix", "KEY-")
     duration = request.form.get("duration")
-    key = str(uuid.uuid4())
-    expire_date = None
-
+    hwid = request.form.get("hwid", None)
+    
+    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=7))
+    key = f"{prefix}{random_part}"
+    
     if duration == "1d":
         expire_date = (datetime.now() + timedelta(days=1)).isoformat()
     elif duration == "3d":
@@ -91,10 +100,17 @@ def generate_key():
         expire_date = (datetime.now() + timedelta(days=30)).isoformat()
     elif duration == "lifetime":
         expire_date = "lifetime"
+    else:
+        expire_date = (datetime.now() + timedelta(days=1)).isoformat()  # default 1 gün
 
     data = load_data()
-    data["keys"][key] = {"hwid": None, "expires": expire_date, "status": "unused"}
+    data["keys"][key] = {
+        "hwid": hwid,
+        "expires": expire_date,
+        "status": "unused"
+    }
     save_data(data)
+    flash(f"Key oluşturuldu: {key}", "success")
     return redirect(url_for("home"))
 
 @app.route("/delete/<key>")
@@ -103,7 +119,8 @@ def delete_key(key):
     data = load_data()
     if key in data["keys"]:
         del data["keys"][key]
-    save_data(data)
+        save_data(data)
+        flash(f"{key} silindi.", "info")
     return redirect(url_for("home"))
 
 @app.route("/reset_hwid/<key>")
@@ -113,7 +130,8 @@ def reset_hwid(key):
     if key in data["keys"]:
         data["keys"][key]["hwid"] = None
         data["keys"][key]["status"] = "unused"
-    save_data(data)
+        save_data(data)
+        flash(f"{key} için HWID sıfırlandı.", "success")
     return redirect(url_for("home"))
 
 @app.route("/auth", methods=["POST"])
@@ -128,6 +146,8 @@ def auth():
     record = data["keys"][key]
 
     if record["expires"] != "lifetime" and datetime.now() > datetime.fromisoformat(record["expires"]):
+        record["status"] = "expired"
+        save_data(data)
         return "KEY_EXPIRED"
 
     if record["hwid"] is None:

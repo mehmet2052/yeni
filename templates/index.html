@@ -1,42 +1,92 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Key Yönetim Paneli</title>
+    <meta charset="UTF-8">
+    <title>Key Oluştur</title>
     <style>
-        body { font-family: Arial; padding: 20px; background: #f0f0f0; }
-        table { width: 100%%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ccc; }
-        th { background: #eee; }
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: url('https://i.imgur.com/C3JdbCM.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', sans-serif;
+            position: relative;
+            color: #fff;
+        }
+
+        .overlay {
+            backdrop-filter: blur(10px);
+            background-color: rgba(0, 0, 0, 0.5);
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .rain {
+            background: url('https://i.ibb.co/FWQCRwq/rain.gif') repeat;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        .form-container {
+            position: relative;
+            z-index: 2;
+            margin: 100px auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            width: 400px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #3f87ff;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #1c5fd1;
+        }
     </style>
 </head>
 <body>
-    <h2>Key Yönetim Paneli</h2>
-    <form method="POST" action="/generate">
-        <label>Süre:</label>
-        <select name="duration">
-            <option value="1d">1 Gün</option>
-            <option value="3d">3 Gün</option>
-            <option value="1m">1 Ay</option>
-            <option value="lifetime">Sınırsız</option>
-        </select>
-        <button type="submit">Oluştur</button>
-    </form>
-    <br>
-    <table>
-        <tr><th>Key</th><th>Durum</th><th>HWID</th><th>Bitiş</th><th>İşlemler</th></tr>
-        {% for key, info in keys.items() %}
-        <tr>
-            <td>{{ key }}</td>
-            <td>{{ info.status }}</td>
-            <td>{{ info.hwid or "-" }}</td>
-            <td>{{ info.expires }}</td>
-            <td>
-                <a href="/delete/{{ key }}">Sil</a> |
-                <a href="/reset_hwid/{{ key }}">HWID Sıfırla</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="overlay"></div>
+    <div class="rain"></div>
+
+    <div class="form-container">
+        <h2>Yeni Key Oluştur</h2>
+        <form action="/generate" method="POST">
+            <label>Ön Ek Seç:</label>
+            <select name="prefix" required>
+                <option value="KEY-">KEY-</option>
+                <option value="LINEKEY-">LINEKEY-</option>
+            </select>
+            <label>Gün Sayısı:</label>
+            <input type="text" name="duration" placeholder="1, 30, 90 ya da lifetime" required />
+            <label>HWID (opsiyonel):</label>
+            <input type="text" name="hwid" placeholder="Donanım Kimliği" />
+            <button type="submit">Key Oluştur</button>
+        </form>
+    </div>
 </body>
 </html>
